@@ -1,0 +1,31 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+n_machines = 2
+ip_prefix = "192.168.48"
+ip_suffix_base = 10
+
+def configure_ovs(host, hostname, ip)
+  pkgs = "vim nmap sysdig tcpdump"
+  host.vm.box = "ubuntu14-docker"
+
+  pkg_cmd = "apt-get update -qq; " \
+    "apt-get install -q -y --force-yes --no-install-recommends "
+  pkg_cmd << pkgs
+  host.vm.provision :shell, :inline => pkg_cmd
+  host.vm.hostname = "#{hostname}"
+  host.vm.network "private_network", ip: ip
+end
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  (1..n_machines).each do |i|
+    config.vm.define "tester0#{i}" do |host|
+      ip_suffix = ip_suffix_base + i
+      configure_ovs(host, "host#{i}", "#{ip_prefix}.#{ip_suffix}")
+    end
+  end
+
+end
